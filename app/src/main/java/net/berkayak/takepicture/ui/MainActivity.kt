@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.TextureView
 import android.view.View
 import android.widget.Button
+import com.google.android.material.snackbar.Snackbar
 import net.berkayak.takepicture.R
 import net.berkayak.takepicture.presenter.IMainActivityContract
 import net.berkayak.takepicture.presenter.MainActivityPresenter
@@ -20,7 +21,7 @@ class MainActivity : AppCompatActivity(), IMainActivityContract.View {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        this.mPresenter = MainActivityPresenter(this, baseContext)
+        this.mPresenter = MainActivityPresenter(this, this)
         this.mPresenter.onCreate()
     }
 
@@ -46,6 +47,14 @@ class MainActivity : AppCompatActivity(), IMainActivityContract.View {
         mPresenter.mTextureView = this.mTextureView
         mTextureView.surfaceTextureListener = textureListener
         mCaptureBtn.setOnClickListener(captureListener)
+    }
+
+    override fun showSnackForPermission(permission: String) {
+        var sb = Snackbar.make(findViewById(R.id.mainLayout), getString(R.string.permission_warning), Snackbar.LENGTH_INDEFINITE)
+        sb.setAction(getString(R.string.Ok), View.OnClickListener {
+            mPresenter.checkPermission(permission)
+        })
+        sb.show()
     }
 
     //we must listen the our texture which preview camera view

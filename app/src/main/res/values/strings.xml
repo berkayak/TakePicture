@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">TakePicture</string>
+    <string name="permission_warning">Please grant permission to use this feature.</string>
+    <string name="Ok">OK</string>
 </resources>

@@ -1,7 +1,10 @@
 package net.berkayak.takepicture.presenter
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
@@ -14,6 +17,8 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivityPresenter: IMainActivityContract.Presenter {
     private var mViewPusher: IMainActivityContract.View
@@ -28,6 +33,7 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
 
     companion object {
         const val CAMERA_INDEX = 0
+        const val REQ_CODE_CAMERA_PERM = 401
     }
 
     constructor(viewPusher: IMainActivityContract.View, context: Context){
@@ -41,10 +47,6 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
 
     override fun onResume() {
         startBackgroundThread()
-        if (mTextureView.isAvailable)
-            openCamera()
-        else
-            mViewPusher.initItems()
     }
 
     override fun onPause() {
@@ -55,16 +57,36 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
         takePicture()
     }
 
-    override fun checkPermission() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun checkPermission(permissions: String): Boolean {
+        if(ContextCompat.checkSelfPermission(mContext, permissions) == PackageManager.PERMISSION_GRANTED){
+            return true
+        } else {
+            ActivityCompat.requestPermissions((mContext as Activity), arrayOf(Manifest.permission.CAMERA), REQ_CODE_CAMERA_PERM)
+            return false
+        }
     }
 
     override fun onPermissionResult(requestCode: Int,permissions: Array<out String>,grantResults: IntArray) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        when(requestCode){
+            REQ_CODE_CAMERA_PERM -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    openCamera()
+                else { //denny button pressed
+                    if (ActivityCompat.shouldShowRequestPermissionRationale((mContext as Activity), Manifest.permission.CAMERA)){
+                        mViewPusher.showSnackForPermission(Manifest.permission.CAMERA)
+                    } else {
+                        //never ask cheked
+                        //mViewPusher.showSnackForPermission(Manifest.permission.CAMERA)
+                    }
+                }
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
     fun openCamera() {
+        if(!checkPermission(Manifest.permission.CAMERA))
+            return
         var cameraManager = mContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         var cameraID = cameraManager.cameraIdList[CAMERA_INDEX]
         var cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraID)

@@ -5,6 +5,7 @@ import android.hardware.camera2.CameraCaptureSession
 interface IMainActivityContract {
     interface View{
         fun initItems()
+        fun showSnackForPermission(permission: String)
     }
 
     interface Presenter{
@@ -13,6 +14,6 @@ interface IMainActivityContract {
         fun onPause()
         fun onCapture()
         fun onPermissionResult(requestCode: Int,permissions: Array<out String>,grantResults: IntArray)
-        fun checkPermission()
+        fun checkPermission(permissions: String): Boolean
     }
 }
