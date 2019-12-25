@@ -17,8 +17,12 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
+import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.snackbar.Snackbar
+import net.berkayak.takepicture.R
+import net.berkayak.takepicture.utilities.FileManager
 
 class MainActivityPresenter: IMainActivityContract.Presenter {
     private var mViewPusher: IMainActivityContract.View
@@ -34,6 +38,7 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
     companion object {
         const val CAMERA_INDEX = 0
         const val REQ_CODE_CAMERA_PERM = 401
+        const val REQ_CODE_WRITE_STORAGE_PERM = 402
     }
 
     constructor(viewPusher: IMainActivityContract.View, context: Context){
@@ -57,11 +62,11 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
         takePicture()
     }
 
-    override fun checkPermission(permissions: String): Boolean {
+    override fun checkPermission(permissions: String, reqCode: Int): Boolean {
         if(ContextCompat.checkSelfPermission(mContext, permissions) == PackageManager.PERMISSION_GRANTED){
             return true
         } else {
-            ActivityCompat.requestPermissions((mContext as Activity), arrayOf(Manifest.permission.CAMERA), REQ_CODE_CAMERA_PERM)
+            ActivityCompat.requestPermissions((mContext as Activity), arrayOf(permissions), reqCode)
             return false
         }
     }
@@ -73,10 +78,28 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
                     openCamera()
                 else { //denny button pressed
                     if (ActivityCompat.shouldShowRequestPermissionRationale((mContext as Activity), Manifest.permission.CAMERA)){
-                        mViewPusher.showSnackForPermission(Manifest.permission.CAMERA)
-                    } else {
-                        //never ask cheked
-                        //mViewPusher.showSnackForPermission(Manifest.permission.CAMERA)
+                        var sb = mViewPusher.snackMaker()
+                        sb.setText(mContext.getString(R.string.permission_warning))
+                        sb.duration = Snackbar.LENGTH_INDEFINITE
+                        sb.setAction(mContext.getString(R.string.Ok), View.OnClickListener {
+                            checkPermission(Manifest.permission.CAMERA, REQ_CODE_CAMERA_PERM)
+                        })
+                        sb.show()
+                    } // else { never ask checked }
+                }
+            }
+            REQ_CODE_WRITE_STORAGE_PERM -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+
+                else { //denny button pressed
+                    if (ActivityCompat.shouldShowRequestPermissionRationale((mContext as Activity), Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+                        var sb = mViewPusher.snackMaker()
+                        sb.setText(mContext.getString(R.string.permission_warning))
+                        sb.duration = Snackbar.LENGTH_INDEFINITE
+                        sb.setAction(mContext.getString(R.string.Ok), View.OnClickListener {
+                            checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQ_CODE_WRITE_STORAGE_PERM)
+                        })
+                        sb.show()
                     }
                 }
             }
@@ -85,7 +108,7 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
 
     @SuppressLint("MissingPermission")
     fun openCamera() {
-        if(!checkPermission(Manifest.permission.CAMERA))
+        if(!checkPermission(Manifest.permission.CAMERA, REQ_CODE_CAMERA_PERM))
             return
         var cameraManager = mContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         var cameraID = cameraManager.cameraIdList[CAMERA_INDEX]
@@ -115,6 +138,10 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
     }
 
     private fun takePicture() {
+        if (!checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, REQ_CODE_WRITE_STORAGE_PERM))
+            return
+        if (!::mCameraDevice.isInitialized || !::mImageDimension.isInitialized)
+            return
         if (!::mImageReader.isInitialized)
             mImageReader = ImageReader.newInstance(mImageDimension.width, mImageDimension.height, ImageFormat.JPEG, 1)
         var surfaces = mutableListOf<Surface>()
@@ -130,6 +157,7 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
 
         var captureLisener = object : CameraCaptureSession.CaptureCallback() {
             override fun onCaptureCompleted(session: CameraCaptureSession,request: CaptureRequest,result: TotalCaptureResult) {
+                session.close()
                 startCameraPreview()
             }
         }
@@ -186,10 +214,21 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
     }
 
     //this will use for takePicture
+    @SuppressLint("MissingPermission")
     private var imageAvailableListener = ImageReader.OnImageAvailableListener { reader ->
         var image : Image
         try{
             image = reader!!.acquireLatestImage()
+            var f = FileManager.Builder()
+                .setFolderPath("TakePicture")
+                .setFileName("CapturedPhoto_")
+                .build()
+
+            var buffer = image.planes[0].buffer
+            var bytes = ByteArray(buffer.capacity())
+            buffer.get(bytes)
+            f.save(bytes)
+            image.close()
             Log.i("REGS", "${image.timestamp}")
         } catch (e: Exception){
             Log.e("REGS", e.message)

@@ -49,12 +49,8 @@ class MainActivity : AppCompatActivity(), IMainActivityContract.View {
         mCaptureBtn.setOnClickListener(captureListener)
     }
 
-    override fun showSnackForPermission(permission: String) {
-        var sb = Snackbar.make(findViewById(R.id.mainLayout), getString(R.string.permission_warning), Snackbar.LENGTH_INDEFINITE)
-        sb.setAction(getString(R.string.Ok), View.OnClickListener {
-            mPresenter.checkPermission(permission)
-        })
-        sb.show()
+    override fun snackMaker(): Snackbar {
+        return Snackbar.make(findViewById(R.id.mainLayout), "", Snackbar.LENGTH_LONG)
     }
 
     //we must listen the our texture which preview camera view
