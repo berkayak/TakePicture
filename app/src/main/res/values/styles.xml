@@ -8,4 +8,14 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="CustomCaptureButton">
+        <item name="android:background">@drawable/capture_button</item>
+        <item name="android:src">@drawable/ic_camera</item>
+    </style>
+
+    <style name="CustomChangeButton">
+        <item name="android:background">@drawable/change_cam</item>
+        <item name="android:src">@drawable/ic_change_cam</item>
+    </style>
+
 </resources>

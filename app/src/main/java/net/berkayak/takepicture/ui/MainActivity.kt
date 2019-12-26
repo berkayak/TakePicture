@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.TextureView
 import android.view.View
-import android.widget.Button
+import android.widget.ImageButton
 import com.google.android.material.snackbar.Snackbar
 import net.berkayak.takepicture.R
 import net.berkayak.takepicture.presenter.IMainActivityContract
@@ -14,7 +14,8 @@ import net.berkayak.takepicture.presenter.MainActivityPresenter
 class MainActivity : AppCompatActivity(), IMainActivityContract.View {
 
     lateinit var mTextureView: TextureView
-    lateinit var mCaptureBtn: Button
+    lateinit var mCaptureBtn: ImageButton
+    lateinit var mChangeCamBtn: ImageButton
     lateinit var mPresenter: MainActivityPresenter
 
 
@@ -42,11 +43,14 @@ class MainActivity : AppCompatActivity(), IMainActivityContract.View {
 
     override fun initItems() {
         mTextureView = findViewById(R.id.myTexture)
-        mCaptureBtn = findViewById(R.id.captureBtn)
+        mCaptureBtn = findViewById(R.id.captureIB)
+        mChangeCamBtn = findViewById(R.id.changeCamIB)
 
         mPresenter.mTextureView = this.mTextureView
         mTextureView.surfaceTextureListener = textureListener
+
         mCaptureBtn.setOnClickListener(captureListener)
+        mChangeCamBtn.setOnClickListener(changeCamListener)
     }
 
     override fun snackMaker(): Snackbar {
@@ -54,7 +58,7 @@ class MainActivity : AppCompatActivity(), IMainActivityContract.View {
     }
 
     //we must listen the our texture which preview camera view
-    private var textureListener = object : TextureView.SurfaceTextureListener {
+    public var textureListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
         }
 
@@ -73,6 +77,10 @@ class MainActivity : AppCompatActivity(), IMainActivityContract.View {
     //we must listen capture button
     private var captureListener = View.OnClickListener {
         mPresenter.onCapture()
+    }
+
+    private var changeCamListener = View.OnClickListener {
+        mPresenter.onChangeCamera()
     }
 
 }

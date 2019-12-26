@@ -14,6 +14,7 @@ interface IMainActivityContract {
         fun onResume()
         fun onPause()
         fun onCapture()
+        fun onChangeCamera()
         fun onPermissionResult(requestCode: Int,permissions: Array<out String>,grantResults: IntArray)
         fun checkPermission(permissions: String, reqCode: Int): Boolean
     }

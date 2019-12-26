@@ -1,22 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.MainActivity"
-    android:orientation="vertical">
+    tools:context=".ui.MainActivity">
 
     <TextureView
         android:id="@+id/myTexture"
         android:layout_width="match_parent"
-        android:layout_height="600dp" />
-<Button
-    android:id="@+id/captureBtn"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="CAPTURE"/>
+        android:layout_height="match_parent" />
 
 
-</LinearLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp">
+        <ImageButton
+            android:id="@+id/captureIB"
+            style="@style/CustomCaptureButton"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_centerHorizontal="true"/>
+
+        <ImageButton
+            android:id="@+id/changeCamIB"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            style="@style/CustomChangeButton"
+            android:layout_toRightOf="@id/captureIB"
+            android:layout_alignBottom="@id/captureIB" />
+
+    </RelativeLayout>
+
+</FrameLayout>

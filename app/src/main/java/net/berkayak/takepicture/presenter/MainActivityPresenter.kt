@@ -28,15 +28,16 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
     private var mViewPusher: IMainActivityContract.View
     private var mContext: Context
     lateinit var mTextureView: TextureView
+    private var cameraIndex = 0
 
     lateinit var mImageDimension: Size
     lateinit var mCameraDevice: CameraDevice
     lateinit var mImageReader: ImageReader
     lateinit var mBackGroundHandler: Handler
     lateinit var mHandlerThread: HandlerThread
+    lateinit var mPreviewSession: CameraCaptureSession
 
     companion object {
-        const val CAMERA_INDEX = 0
         const val REQ_CODE_CAMERA_PERM = 401
         const val REQ_CODE_WRITE_STORAGE_PERM = 402
     }
@@ -60,6 +61,20 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
 
     override fun onCapture() {
         takePicture()
+    }
+
+    override fun onChangeCamera() {
+        if (::mPreviewSession.isInitialized && ::mCameraDevice.isInitialized){
+            mPreviewSession.stopRepeating()
+            mPreviewSession.close()
+            mCameraDevice.close()
+        }
+        var camList = (mContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager).cameraIdList
+        if (camList.size > cameraIndex+1)
+            cameraIndex++
+        else
+            cameraIndex = 0
+        openCamera()
     }
 
     override fun checkPermission(permissions: String, reqCode: Int): Boolean {
@@ -111,7 +126,8 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
         if(!checkPermission(Manifest.permission.CAMERA, REQ_CODE_CAMERA_PERM))
             return
         var cameraManager = mContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        var cameraID = cameraManager.cameraIdList[CAMERA_INDEX]
+
+        var cameraID = cameraManager.cameraIdList[cameraIndex]
         var cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraID)
         var configMap = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP) as StreamConfigurationMap
         mImageDimension = configMap.getOutputSizes(SurfaceTexture::class.java)[0]
@@ -125,7 +141,7 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
         mCameraDevice.createCaptureSession(listOf(surface), previewCaptureSessionStateCallback, null)
     }
 
-    fun updatePreview(session: CameraCaptureSession) {
+    fun updatePreview() {
         if (!::mCameraDevice.isInitialized) return
         var texture = mTextureView.surfaceTexture
         texture.setDefaultBufferSize(mImageDimension.width, mImageDimension.height)
@@ -133,8 +149,7 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
         var previewCaptureReq = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
         previewCaptureReq.addTarget(surface)
         previewCaptureReq.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
-        session.setRepeatingRequest(previewCaptureReq.build(), null, mBackGroundHandler)
-
+        mPreviewSession.setRepeatingRequest(previewCaptureReq.build(), null, mBackGroundHandler)
     }
 
     private fun takePicture() {
@@ -209,7 +224,8 @@ class MainActivityPresenter: IMainActivityContract.Presenter {
             if (!::mCameraDevice.isInitialized){
                 return
             }
-            updatePreview(session)
+            mPreviewSession = session
+            updatePreview()
         }
     }
 
